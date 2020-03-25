@@ -1,0 +1,8 @@
+Code-Review+2: Matthieu Huin <mhuin@redhat.com>
+Workflow+1: Matthieu Huin <mhuin@redhat.com>
+Verified+2: Software Factory Administrator <admin@softwarefactory-project.io>
+Submitted-by: Software Factory Administrator <admin@softwarefactory-project.io>
+Submitted-at: Wed, 25 Mar 2020 16:51:26 +0000
+Reviewed-on: https://softwarefactory-project.io/r/17919
+Project: software-factory/keycloak-event-listener-mqtt
+Branch: refs/heads/master
