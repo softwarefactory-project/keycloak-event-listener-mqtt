@@ -1,0 +1,28 @@
+---
+- hosts: builder
+  tasks:
+    - name: install maven and dependencies
+      yum:
+        name:
+          - maven
+          - java-1.8.0-openjdk
+        state: present
+      become: true
+    - name: run maven clean install
+      command: "/usr/share/maven clean install -l maven_build.log"
+      become: yes
+      ignore_errors: yes
+      register: build_result
+    - name: export built artifact
+      synchronize:
+        src: target/
+        dest: "{{ zuul.executor.log_root }}/build"
+        recursive: no
+        rsync_opts:
+          - "--include=*.jar"
+      when:
+        - build_result.rc == 0
+    - name: export build log
+      synchronize:
+        src: maven_build.log
+        dest: "{{ zuul.executor.log_root }}/maven_log"
