@@ -1,0 +1,35 @@
+---
+- hosts: builder
+  tasks:
+    - name: install maven and dependencies
+      yum:
+        name:
+          - maven
+          - java-1.8.0-openjdk
+        state: present
+      become: true
+    - name: run maven clean install
+      command: "/usr/bin/mvn clean install -l maven_build.log"
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
+      become: yes
+      #ignore_errors: yes
+      register: build_result
+    - name: export built artifacts
+      synchronize:
+        src: "{{ ansible_env.HOME }}/{{ zuul.project.src_dir }}/target/"
+        dest: "{{ zuul.executor.log_root }}/build/"
+        mode: pull
+        rsync_opts:
+          - "--include=*/"
+          - "--exclude=*"
+          - "--include=*.jar"
+      become: yes
+      when:
+        - build_result.rc == 0
+    - name: export build log
+      synchronize:
+        src: "{{ ansible_env.HOME }}/{{ zuul.project.src_dir }}/maven_build.log"
+        dest: "{{ zuul.executor.log_root }}/maven_build.log"
+        mode: pull
+      become: yes
