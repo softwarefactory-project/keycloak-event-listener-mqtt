@@ -1,0 +1,17 @@
+---
+- job:
+    name: maven-build
+    parent: base
+    description: build the extension with maven
+    run: zuulCI/playbooks/maven-build.yaml
+    nodeset:
+      nodes:
+        - name: builder
+          label: cloud-centos-7
+- project:
+    check:
+      jobs:
+        - maven-build
+    gate:
+      jobs:
+        - maven-build
