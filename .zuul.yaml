@@ -1,0 +1,16 @@
+---
+- project:
+    check:
+      jobs:
+        - maven-build
+        - keycloak-test-deploy:
+            voting: false
+            dependencies:
+              - maven-build
+    gate:
+      jobs:
+        - maven-build
+        - keycloak-test-deploy:
+            voting: false
+            dependencies:
+              - maven-build
