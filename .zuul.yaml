@@ -1,0 +1,11 @@
+---
+- project:
+    check:
+      jobs:
+        - maven-build
+        - keycloak-test-deploy:
+            dependencies:
+              - maven-build
+    gate:
+      jobs:
+        - keycloak-test-deploy
