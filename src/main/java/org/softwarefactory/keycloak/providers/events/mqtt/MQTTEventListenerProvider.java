@@ -97,7 +97,8 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
         } else {
             String stringEvent = toString(event);
             try {
-                MqttClient client = new MqttClient(this.serverUri ,publisherId);
+                MemoryPersistence persistence = new MemoryPersistence();
+                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
                 MqttConnectOptions options = new MqttConnectOptions();
                 options.setAutomaticReconnect(true);
                 options.setCleanSession(true);
