@@ -23,10 +23,10 @@ import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.OperationType;
 
-import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import org.json.JSONObject;
@@ -60,72 +60,65 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(Event event) {
         // Ignore excluded events
-        if (excludedEvents != null && excludedEvents.contains(event.getType())) {
-            return;
-        } else {
-            String stringEvent = toString(event);
-            try {
-                MemoryPersistence persistence = new MemoryPersistence();
-                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setAutomaticReconnect(true);
-                options.setCleanSession(true);
-                options.setConnectionTimeout(10);
-                if (this.username != null && this.password != null) {
-                    options.setUserName(this.username);
-                    options.setPassword(this.password.toCharArray());
-                }
-                client.connect(options);
-                System.out.println("EVENT: " + stringEvent);
-                MqttMessage payload = toPayload(stringEvent);
-                payload.setQos(0);
-                payload.setRetained(true);
-                client.publish(this.TOPIC, payload);
-                client.disconnect();
-            } catch(Exception e) {
-                // ?
-                System.out.println("UH OH!! " + e.toString());
-                e.printStackTrace();
-                return;
-            }
+        if (!(excludedEvents != null && excludedEvents.contains(event.getType()))) {
+            publishEvent(toString(event));
         }
     }
 
     @Override
     public void onEvent(AdminEvent event, boolean includeRepresentation) {
         // Ignore excluded operations
-        if (excludedAdminOperations != null && excludedAdminOperations.contains(event.getOperationType())) {
-            return;
-        } else {
-            String stringEvent = toString(event);
-            try {
-                MemoryPersistence persistence = new MemoryPersistence();
-                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setAutomaticReconnect(true);
-                options.setCleanSession(true);
-                options.setConnectionTimeout(10);
-                if (this.username != null && this.password != null) {
-                    options.setUserName(this.username);
-                    options.setPassword(this.password.toCharArray());
-                }
-                client.connect(options);
-                // System.out.println("EVENT: " + stringEvent);
-                MqttMessage payload = toPayload(stringEvent);
-                payload.setQos(0);
-                payload.setRetained(true);
-                client.publish(this.TOPIC, payload);
-                client.disconnect();
-            } catch(Exception e) {
-                // ?
-                System.out.println("UH OH!! " + e.toString());
-                e.printStackTrace();
-                return;
-            }
+        if (!(excludedAdminOperations != null && excludedAdminOperations.contains(event.getOperationType()))) {
+            publishEvent(toString(event));
         }
     }
 
+    private void publishEvent(String evt) {
+        try {
+            System.out.println("EVENT: " + evt);
 
+            MqttClient client = getClient();
+            MqttMessage payload = buildMessage(evt);
+
+            publishMessage(client, payload);
+        } catch(Exception e) {
+            System.out.println("Could not publish MQTT event: " + e.toString());
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    private MqttClient getClient() throws MqttException{
+        MemoryPersistence persistence = new MemoryPersistence();
+        MqttClient client = new MqttClient(this.serverUri, publisherId, persistence);
+        MqttConnectOptions options = new MqttConnectOptions();
+
+        options.setAutomaticReconnect(true);
+        options.setCleanSession(true);
+        options.setConnectionTimeout(10);
+
+        if (this.username != null && this.password != null) {
+            options.setUserName(this.username);
+            options.setPassword(this.password.toCharArray());
+        }
+
+        client.connect(options);
+
+        return client;
+    }
+
+    private MqttMessage buildMessage(String event) {
+        MqttMessage msg = toPayload(event);
+        msg.setQos(0);
+        msg.setRetained(false);
+        return msg;
+    }
+
+    private void publishMessage(MqttClient client, MqttMessage payload) throws MqttException {
+        client.publish(this.TOPIC, payload);
+        client.disconnect();
+        client.close();
+    }
 
     private MqttMessage toPayload(String s) {
         byte[] payload = s.getBytes();
