@@ -29,6 +29,8 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import org.json.JSONObject;
+
 import java.util.Map;
 import java.util.Set;
 import java.lang.Exception;
@@ -131,64 +133,46 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     }
 
     private String toString(Event event) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("{'type': '");
-        sb.append(event.getType());
-        sb.append("', 'realmId': '");
-        sb.append(event.getRealmId());
-        sb.append("', 'clientId': '");
-        sb.append(event.getClientId());
-        sb.append("', 'userId': '");
-        sb.append(event.getUserId());
-        sb.append("', 'ipAddress': '");
-        sb.append(event.getIpAddress());
-        sb.append("'");
+        JSONObject main = new JSONObject()
+            .put("type", event.getType())
+            .put("source", "userAction")
+            .put("realmId", event.getRealmId())
+            .put("clientId", event.getClientId())
+            .put("userId", event.getUserId())
+            .put("ipAddress", event.getIpAddress());
 
         if (event.getError() != null) {
-            sb.append(", 'error': '");
-            sb.append(event.getError());
-            sb.append("'");
+            main.put("error", event.getError());
         }
-        sb.append(", 'details': {");
+
+        JSONObject details = new JSONObject();
+
         if (event.getDetails() != null) {
             for (Map.Entry<String, String> e : event.getDetails().entrySet()) {
-                sb.append("'");
-                sb.append(e.getKey());
-                sb.append("': '");
-                sb.append(e.getValue());
-                sb.append("', ");
+                details.put(e.getKey(), e.getValue());
             }
         }
-        sb.append("}}");
 
-        return sb.toString();
+        main.put("details", details);
+
+        return main.toString();
     }
 
     private String toString(AdminEvent adminEvent) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("{'type': '");
-        sb.append(adminEvent.getOperationType());
-        sb.append("', 'realmId': '");
-        sb.append(adminEvent.getAuthDetails().getRealmId());
-        sb.append("', 'clientId': '");
-        sb.append(adminEvent.getAuthDetails().getClientId());
-        sb.append("', 'userId': '");
-        sb.append(adminEvent.getAuthDetails().getUserId());
-        sb.append("', 'ipAddress': '");
-        sb.append(adminEvent.getAuthDetails().getIpAddress());
-        sb.append("', 'resourcePath': '");
-        sb.append(adminEvent.getResourcePath());
-        sb.append("'");
+        JSONObject main = new JSONObject()
+            .put("type", adminEvent.getOperationType())
+            .put("source", "adminAction")
+            .put("realmId", adminEvent.getAuthDetails().getRealmId())
+            .put("clientId", adminEvent.getAuthDetails().getClientId())
+            .put("userId", adminEvent.getAuthDetails().getUserId())
+            .put("ipAddress", adminEvent.getAuthDetails().getIpAddress())
+            .put("resourcePath", adminEvent.getResourcePath());
 
         if (adminEvent.getError() != null) {
-            sb.append(", 'error': '");
-            sb.append(adminEvent.getError());
-            sb.append("'");
+            main.put("error", adminEvent.getError());
         }
-        sb.append("}");
-        return sb.toString();
+
+        return main.toString();
     }
 
     @Override
