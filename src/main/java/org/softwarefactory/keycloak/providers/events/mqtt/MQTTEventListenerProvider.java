@@ -47,14 +47,16 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     private String password;
     public static final String publisherId = "keycloak";
     public String TOPIC;
+    public boolean usePersistence;
 
-    public MQTTEventListenerProvider(Set<EventType> excludedEvents, Set<OperationType> excludedAdminOperations, String serverUri, String username, String password, String topic) {
+    public MQTTEventListenerProvider(Set<EventType> excludedEvents, Set<OperationType> excludedAdminOperations, String serverUri, String username, String password, String topic, boolean usePersistence) {
         this.excludedEvents = excludedEvents;
         this.excludedAdminOperations = excludedAdminOperations;
         this.serverUri = serverUri;
         this.username = username;
         this.password = password;
         this.TOPIC = topic;
+        this.usePersistence = usePersistence;
     }
 
     @Override
@@ -65,7 +67,10 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
         } else {
             String stringEvent = toString(event);
             try {
-                MemoryPersistence persistence = new MemoryPersistence();
+                MemoryPersistence persistence = null;
+                if (this.usePersistence == true) {
+                    persistence = new MemoryPersistence();
+                }
                 MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
                 MqttConnectOptions options = new MqttConnectOptions();
                 options.setAutomaticReconnect(true);
@@ -84,7 +89,7 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
                 client.disconnect();
             } catch(Exception e) {
                 // ?
-                System.out.println("UH OH!! " + e.toString());
+                System.out.println("Caught the following error: " + e.toString());
                 e.printStackTrace();
                 return;
             }
@@ -99,7 +104,11 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
         } else {
             String stringEvent = toString(event);
             try {
-                MqttClient client = new MqttClient(this.serverUri ,publisherId);
+                MemoryPersistence persistence = null;
+                if (this.usePersistence == true) {
+                    persistence = new MemoryPersistence();
+                }
+                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
                 MqttConnectOptions options = new MqttConnectOptions();
                 options.setAutomaticReconnect(true);
                 options.setCleanSession(true);
@@ -117,7 +126,7 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
                 client.disconnect();
             } catch(Exception e) {
                 // ?
-                System.out.println("UH OH!! " + e.toString());
+                System.out.println("Caught the following error: " + e.toString());
                 e.printStackTrace();
                 return;
             }

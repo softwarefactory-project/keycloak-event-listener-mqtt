@@ -40,10 +40,11 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
     private String username;
     private String password;
     private String topic;
+    private boolean usePersistence;
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
-        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, serverUri, username, password, topic);
+        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, serverUri, username, password, topic, usePersistence);
     }
 
     @Override
@@ -68,6 +69,7 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
         username = config.get("username", null);
         password = config.get("password", null);
         topic = config.get("topic", "keycloak/events");
+        usePersistence = config.getBoolean("usePersistence", false);
     }
 
     @Override
