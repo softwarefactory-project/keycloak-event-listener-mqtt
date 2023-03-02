@@ -2,7 +2,15 @@
 - project:
     check:
       jobs:
-        - maven-build
+        - maven-build:
+            nodeset:
+              nodes:
+                - name: builder
+                  label: cloud-centos-8-stream
     gate:
       jobs:
-        - maven-build
+        - maven-build:
+            nodeset:
+              nodes:
+                - name: builder
+                  label: cloud-centos-8-stream
