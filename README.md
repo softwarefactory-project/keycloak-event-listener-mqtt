@@ -57,5 +57,5 @@ kc.sh start
   --spi-events-listener-mqtt-username mqtt_user \
   --spi-events-listener-mqtt-password mqtt_password \
   --spi-events-listener-mqtt-topic my_topic
-  --spi-events-listener-mqtt-user-persistence true
+  --spi-events-listener-mqtt-use-persistence true
 ```
