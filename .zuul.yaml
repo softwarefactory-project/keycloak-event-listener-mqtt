@@ -2,15 +2,9 @@
 - project:
     check:
       jobs:
-        - maven-build:
-            nodeset:
-              nodes:
-                - name: builder
-                  label: cloud-centos-8-stream
+        - keycloak-extensions-maven-build
+        - keycloak-extensions-test-deploy
     gate:
       jobs:
-        - maven-build:
-            nodeset:
-              nodes:
-                - name: builder
-                  label: cloud-centos-8-stream
+        - keycloak-extensions-maven-build
+        - keycloak-extensions-test-deploy
