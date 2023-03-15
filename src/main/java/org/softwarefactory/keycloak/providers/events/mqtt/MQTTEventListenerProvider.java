@@ -18,7 +18,6 @@
 package org.softwarefactory.keycloak.providers.events.mqtt;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,9 +29,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.simple.JSONObject;
 import org.keycloak.events.Event;
 import org.keycloak.events.EventListenerProvider;
-import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
-import org.keycloak.events.admin.OperationType;
+import org.softwarefactory.keycloak.providers.events.models.Configuration;
 
 /**
  * @author <a href="mailto:mhuin@redhat.com">Matthieu Huin</a>
@@ -40,30 +38,17 @@ import org.keycloak.events.admin.OperationType;
 public class MQTTEventListenerProvider implements EventListenerProvider {
     private static final Logger logger = Logger.getLogger(MQTTEventListenerProvider.class.getName());
 
-    private Set<EventType> excludedEvents;
-    private Set<OperationType> excludedAdminOperations;
-    private String serverUri;
-    private String username;
-    private String password;
-    private String topic;
-    private boolean usePersistence;
+    private Configuration configuration;
     public static final String PUBLISHER_ID = "keycloak";
 
-    public MQTTEventListenerProvider(Set<EventType> excludedEvents, Set<OperationType> excludedAdminOperations,
-            String serverUri, String username, String password, String topic, boolean usePersistence) {
-        this.excludedEvents = excludedEvents;
-        this.excludedAdminOperations = excludedAdminOperations;
-        this.serverUri = serverUri;
-        this.username = username;
-        this.password = password;
-        this.topic = topic;
-        this.usePersistence = usePersistence;
+    public MQTTEventListenerProvider(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     @Override
     public void onEvent(Event event) {
         // Ignore excluded events
-        if (excludedEvents == null || !excludedEvents.contains(event.getType())) {
+        if (configuration.excludedEvents == null || !this.configuration.excludedEvents.contains(event.getType())) {
             sendMqttMessage(convertEvent(event));
         }
     }
@@ -71,34 +56,34 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     @Override
     public void onEvent(AdminEvent event, boolean includeRepresentation) {
         // Ignore excluded operations
-        if (excludedAdminOperations == null || !excludedAdminOperations.contains(event.getOperationType())) {
+        if (configuration.excludedAdminOperations == null || !configuration.excludedAdminOperations.contains(event.getOperationType())) {
             sendMqttMessage(convertAdminEvent(event));
         }
     }
 
     private void sendMqttMessage(String event) {
         MemoryPersistence persistence = null;
-        if (this.usePersistence) {
+        if (configuration.usePersistence) {
             persistence = new MemoryPersistence();
         }
 
-        try (IMqttClient client = new MqttClient(this.serverUri, PUBLISHER_ID, persistence)) {
+        try (IMqttClient client = new MqttClient(configuration.serverUri, PUBLISHER_ID, persistence)) {
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);
-            options.setCleanSession(true);
+            options.setCleanSession(configuration.cleanSession);
             options.setConnectionTimeout(10);
 
-            if (this.username != null && this.password != null) {
-                options.setUserName(this.username);
-                options.setPassword(this.password.toCharArray());
+            if (configuration.username != null && configuration.password != null) {
+                options.setUserName(configuration.username);
+                options.setPassword(configuration.password.toCharArray());
             }
 
             client.connect(options);
             logger.log(Level.FINE, "Event: {0}", event);
             MqttMessage payload = toPayload(event);
-            payload.setQos(0);
-            payload.setRetained(true);
-            client.publish(this.topic, payload);
+            payload.setQos(configuration.qos);
+            payload.setRetained(configuration.retained);
+            client.publish(configuration.topic, payload);
             client.disconnect();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Event: {0}", e.getStackTrace());

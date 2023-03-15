@@ -18,8 +18,6 @@
 package org.softwarefactory.keycloak.providers.events.mqtt;
 
 import java.util.HashSet;
-import java.util.Set;
-
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -27,49 +25,47 @@ import org.keycloak.events.EventType;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.softwarefactory.keycloak.providers.events.models.Configuration;
 
 /**
  * @author <a href="mailto:mhuin@redhat.com">Matthieu Huin</a>
  */
 public class MQTTEventListenerProviderFactory implements EventListenerProviderFactory {
 
-    private Set<EventType> excludedEvents;
-    private Set<OperationType> excludedAdminOperations;
-    private String serverUri;
-    private String username;
-    private String password;
-    private String topic;
-    private boolean usePersistence;
+    private Configuration configuration;
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
-        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, serverUri, username, password,
-                topic, usePersistence);
+        return new MQTTEventListenerProvider(configuration);
     }
 
     @Override
     public void init(Config.Scope config) {
+        configuration = new Configuration();
         String[] excludes = config.getArray("exclude-events");
         if (excludes != null) {
-            excludedEvents = new HashSet<>();
+            configuration.excludedEvents = new HashSet<>();
             for (String e : excludes) {
-                excludedEvents.add(EventType.valueOf(e));
+                configuration.excludedEvents.add(EventType.valueOf(e));
             }
         }
 
         String[] excludesOperations = config.getArray("excludesOperations");
         if (excludesOperations != null) {
-            excludedAdminOperations = new HashSet<>();
+            configuration.excludedAdminOperations = new HashSet<>();
             for (String e : excludesOperations) {
-                excludedAdminOperations.add(OperationType.valueOf(e));
+                configuration.excludedAdminOperations.add(OperationType.valueOf(e));
             }
         }
 
-        serverUri = config.get("serverUri", "tcp://localhost:1883");
-        username = config.get("username", null);
-        password = config.get("password", null);
-        topic = config.get("topic", "keycloak/events");
-        usePersistence = config.getBoolean("usePersistence", false);
+        configuration.serverUri = config.get("serverUri", "tcp://localhost:1883");
+        configuration.username = config.get("username", null);
+        configuration.password = config.get("password", null);
+        configuration.topic = config.get("topic", "keycloak/events");
+        configuration.usePersistence = config.getBoolean("usePersistence", false);
+        configuration.retained = config.getBoolean("retained", true);
+        configuration.cleanSession = config.getBoolean("cleanSession", true);
+        configuration.qos = config.getInt("qos", 0);
     }
 
     @Override
