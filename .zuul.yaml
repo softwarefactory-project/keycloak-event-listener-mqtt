@@ -2,7 +2,9 @@
 - project:
     check:
       jobs:
-        - maven-build
+        - keycloak-extensions-maven-build
+        - keycloak-extensions-test-deploy
     gate:
       jobs:
-        - maven-build
+        - keycloak-extensions-maven-build
+        - keycloak-extensions-test-deploy

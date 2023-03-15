@@ -57,5 +57,17 @@ kc.sh start
   --spi-events-listener-mqtt-username mqtt_user \
   --spi-events-listener-mqtt-password mqtt_password \
   --spi-events-listener-mqtt-topic my_topic
-  --spi-events-listener-mqtt-user-persistence true
+  --spi-events-listener-mqtt-use-persistence true
 ```
+
+# Trying it out
+
+The Dockerfile in the `testing` directory can be used to build a keycloak container image
+with the listener pre-installed. It assumes the compiled jar has been generated.
+
+The compose in the same directory will launch keycloak and a MQTT server; keycloak is configured
+to publish to this server - however the listener must be enabled on any realm.
+
+The `demo.sh` script at the root of the repository automates all the steps above up to and
+including configuring the master realm to publish events to the MQTT server, and can be used
+to test the event listener out.
