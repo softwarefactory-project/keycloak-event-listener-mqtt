@@ -17,6 +17,9 @@
 
 package org.softwarefactory.keycloak.providers.events.mqtt;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -24,10 +27,6 @@ import org.keycloak.events.EventType;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.lang.Exception;
 
 /**
  * @author <a href="mailto:mhuin@redhat.com">Matthieu Huin</a>
@@ -44,7 +43,8 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
-        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, serverUri, username, password, topic, usePersistence);
+        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, serverUri, username, password,
+                topic, usePersistence);
     }
 
     @Override
@@ -74,15 +74,16 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-
+        // not needed
     }
+
     @Override
     public void close() {
+        // not needed
     }
 
     @Override
     public String getId() {
         return "mqtt";
     }
-
 }
