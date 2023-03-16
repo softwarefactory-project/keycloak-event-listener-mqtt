@@ -2,9 +2,9 @@
 
 A Keycloak SPI that publishes events to a MQTT broker.
 
-This SPI has been deployed successfully on a containerized Keycloak 15.0.2
+This SPI has been deployed successfully on a containerized Keycloak 19.0.2
 and on a Keycloak 19.0 server on a kubernetes cluster. It should therefore
-work properly on any version of Keycloak above 15.0.2.
+work properly on any version of Keycloak above 19.0.2.
 
 # Build
 
@@ -36,6 +36,9 @@ And add below:
             <property name="password" value="mqtt_password"/>
             <property name="topic" value="my_topic"/>
             <property name="usePersistence" value="true">
+            <property name="retained" value="true">
+            <property name="cleanSession" value="true">
+            <property name="qos" value="0">
         </properties>
     </provider>
 </spi>
@@ -58,6 +61,9 @@ kc.sh start
   --spi-events-listener-mqtt-password mqtt_password \
   --spi-events-listener-mqtt-topic my_topic
   --spi-events-listener-mqtt-use-persistence true
+  --spi-events-listener-mqtt-retained true
+  --spi-events-listener-mqtt-clean-session true
+  --spi-events-listener-mqtt-qos 0
 ```
 
 # Trying it out

@@ -17,136 +17,86 @@
 
 package org.softwarefactory.keycloak.providers.events.mqtt;
 
-import org.keycloak.events.Event;
-import org.keycloak.events.EventListenerProvider;
-import org.keycloak.events.EventType;
-import org.keycloak.events.admin.AdminEvent;
-import org.keycloak.events.admin.OperationType;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-
 import org.json.simple.JSONObject;
-
-import java.util.Map;
-import java.util.Set;
-import java.lang.Exception;
+import org.keycloak.events.Event;
+import org.keycloak.events.EventListenerProvider;
+import org.keycloak.events.admin.AdminEvent;
+import org.softwarefactory.keycloak.providers.events.models.Configuration;
 
 /**
  * @author <a href="mailto:mhuin@redhat.com">Matthieu Huin</a>
  */
 public class MQTTEventListenerProvider implements EventListenerProvider {
+    private static final Logger logger = Logger.getLogger(MQTTEventListenerProvider.class.getName());
 
-    private Set<EventType> excludedEvents;
-    private Set<OperationType> excludedAdminOperations;
-    private String serverUri;
-    private String username;
-    private String password;
-    public static final String publisherId = "keycloak";
-    public String TOPIC;
-    public boolean usePersistence;
+    private Configuration configuration;
+    public static final String PUBLISHER_ID = "keycloak";
 
-    public MQTTEventListenerProvider(Set<EventType> excludedEvents, Set<OperationType> excludedAdminOperations, String serverUri, String username, String password, String topic, boolean usePersistence) {
-        this.excludedEvents = excludedEvents;
-        this.excludedAdminOperations = excludedAdminOperations;
-        this.serverUri = serverUri;
-        this.username = username;
-        this.password = password;
-        this.TOPIC = topic;
-        this.usePersistence = usePersistence;
+    public MQTTEventListenerProvider(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     @Override
     public void onEvent(Event event) {
         // Ignore excluded events
-        if (excludedEvents != null && excludedEvents.contains(event.getType())) {
-            return;
-        } else {
-            String stringEvent = toString(event);
-            try {
-                MemoryPersistence persistence = null;
-                if (this.usePersistence == true) {
-                    persistence = new MemoryPersistence();
-                }
-                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setAutomaticReconnect(true);
-                options.setCleanSession(true);
-                options.setConnectionTimeout(10);
-                if (this.username != null && this.password != null) {
-                    options.setUserName(this.username);
-                    options.setPassword(this.password.toCharArray());
-                }
-                client.connect(options);
-                System.out.println("EVENT: " + stringEvent);
-                MqttMessage payload = toPayload(stringEvent);
-                payload.setQos(0);
-                payload.setRetained(true);
-                client.publish(this.TOPIC, payload);
-                client.disconnect();
-            } catch(Exception e) {
-                // ?
-                System.out.println("Caught the following error: " + e.toString());
-                e.printStackTrace();
-                return;
-            }
+        if (configuration.excludedEvents == null || !configuration.excludedEvents.contains(event.getType())) {
+            sendMqttMessage(convertEvent(event));
         }
     }
 
     @Override
     public void onEvent(AdminEvent event, boolean includeRepresentation) {
         // Ignore excluded operations
-        if (excludedAdminOperations != null && excludedAdminOperations.contains(event.getOperationType())) {
-            return;
-        } else {
-            String stringEvent = toString(event);
-            try {
-                MemoryPersistence persistence = null;
-                if (this.usePersistence == true) {
-                    persistence = new MemoryPersistence();
-                }
-                MqttClient client = new MqttClient(this.serverUri ,publisherId, persistence);
-                MqttConnectOptions options = new MqttConnectOptions();
-                options.setAutomaticReconnect(true);
-                options.setCleanSession(true);
-                options.setConnectionTimeout(10);
-                if (this.username != null && this.password != null) {
-                    options.setUserName(this.username);
-                    options.setPassword(this.password.toCharArray());
-                }
-                client.connect(options);
-                // System.out.println("EVENT: " + stringEvent);
-                MqttMessage payload = toPayload(stringEvent);
-                payload.setQos(0);
-                payload.setRetained(true);
-                client.publish(this.TOPIC, payload);
-                client.disconnect();
-            } catch(Exception e) {
-                // ?
-                System.out.println("Caught the following error: " + e.toString());
-                e.printStackTrace();
-                return;
-            }
+        if (configuration.excludedAdminOperations == null
+                || !configuration.excludedAdminOperations.contains(event.getOperationType())) {
+            sendMqttMessage(convertAdminEvent(event));
         }
     }
 
+    private void sendMqttMessage(String event) {
+        MemoryPersistence persistence = null;
+        if (configuration.usePersistence) {
+            persistence = new MemoryPersistence();
+        }
 
+        try (IMqttClient client = new MqttClient(configuration.serverUri, PUBLISHER_ID, persistence)) {
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setAutomaticReconnect(true);
+            options.setCleanSession(configuration.cleanSession);
+            options.setConnectionTimeout(10);
+
+            if (configuration.username != null && configuration.password != null) {
+                options.setUserName(configuration.username);
+                options.setPassword(configuration.password.toCharArray());
+            }
+
+            client.connect(options);
+            logger.log(Level.FINE, "Event: {0}", event);
+            MqttMessage payload = toPayload(event);
+            payload.setQos(configuration.qos);
+            payload.setRetained(configuration.retained);
+            client.publish(configuration.topic, payload);
+            client.disconnect();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Event: {0}", e.getStackTrace());
+        }
+    }
 
     private MqttMessage toPayload(String s) {
         byte[] payload = s.getBytes();
         return new MqttMessage(payload);
     }
 
-    private String toString(Event event) {
-        JSONObject obj = toJSON(event);
-        return obj.toString();
-
-    }
-
-    private JSONObject toJSON(Event event) {
+    private String convertEvent(Event event) {
         JSONObject ev = new JSONObject();
 
         ev.put("type", event.getType().toString());
@@ -157,7 +107,7 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
         ev.put("time", event.getTime());
 
         ev.put("error", event.getError());
-        
+
         JSONObject evDetails = new JSONObject();
         if (event.getDetails() != null) {
             for (Map.Entry<String, String> e : event.getDetails().entrySet()) {
@@ -166,19 +116,13 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
         }
         ev.put("details", evDetails);
 
-        return ev;
+        return ev.toString();
     }
 
-    private String toString(AdminEvent adminEvent) {
-        JSONObject obj = toJSON(adminEvent);
-        return obj.toString();
-
-    }
-
-    private JSONObject toJSON(AdminEvent adminEvent) {
+    private String convertAdminEvent(AdminEvent adminEvent) {
         JSONObject ev = new JSONObject();
 
-        ev.put("type",adminEvent.getOperationType().toString());
+        ev.put("type", adminEvent.getOperationType().toString());
         ev.put("realmId", adminEvent.getAuthDetails().getRealmId());
         ev.put("clientId", adminEvent.getAuthDetails().getClientId());
         ev.put("userId", adminEvent.getAuthDetails().getUserId());
@@ -189,7 +133,7 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
 
         ev.put("error", adminEvent.getError());
 
-        return ev;
+        return ev.toString();
     }
 
     @Override
