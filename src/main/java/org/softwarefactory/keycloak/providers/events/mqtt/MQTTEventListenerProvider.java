@@ -87,7 +87,7 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
             client.publish(configuration.topic, payload);
             client.disconnect();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Event: {0}", e.getStackTrace());
+            logger.log(Level.SEVERE, "Publishing failed!", e);
         }
     }
 
