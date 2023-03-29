@@ -18,6 +18,16 @@
 package org.softwarefactory.keycloak.providers.events.mqtt;
 
 import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttSecurityException;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.keycloak.Config;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventListenerProviderFactory;
@@ -25,47 +35,74 @@ import org.keycloak.events.EventType;
 import org.keycloak.events.admin.OperationType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
-import org.softwarefactory.keycloak.providers.events.models.Configuration;
+import org.softwarefactory.keycloak.providers.events.models.MQTTMessageOptions;
 
 /**
  * @author <a href="mailto:mhuin@redhat.com">Matthieu Huin</a>
  */
 public class MQTTEventListenerProviderFactory implements EventListenerProviderFactory {
+    private static final Logger logger = Logger.getLogger(MQTTEventListenerProviderFactory.class.getName());
+    private static final String PUBLISHER_ID = "keycloak";
 
-    private Configuration configuration;
+    private IMqttClient client;
+    private Set<EventType> excludedEvents;
+    private Set<OperationType> excludedAdminOperations;
+    private MQTTMessageOptions messageOptions;
 
     @Override
     public EventListenerProvider create(KeycloakSession session) {
-        return new MQTTEventListenerProvider(configuration);
+        return new MQTTEventListenerProvider(excludedEvents, excludedAdminOperations, messageOptions, client);
     }
 
     @Override
     public void init(Config.Scope config) {
-        configuration = new Configuration();
-        String[] excludes = config.getArray("exclude-events");
+        var excludes = config.getArray("excludeEvents");
         if (excludes != null) {
-            configuration.excludedEvents = new HashSet<>();
+            excludedEvents = new HashSet<EventType>();
             for (String e : excludes) {
-                configuration.excludedEvents.add(EventType.valueOf(e));
+                excludedEvents.add(EventType.valueOf(e));
             }
         }
 
         String[] excludesOperations = config.getArray("excludesOperations");
         if (excludesOperations != null) {
-            configuration.excludedAdminOperations = new HashSet<>();
+            excludedAdminOperations = new HashSet<OperationType>();
             for (String e : excludesOperations) {
-                configuration.excludedAdminOperations.add(OperationType.valueOf(e));
+                excludedAdminOperations.add(OperationType.valueOf(e));
             }
         }
 
-        configuration.serverUri = config.get("serverUri", "tcp://localhost:1883");
-        configuration.username = config.get("username", null);
-        configuration.password = config.get("password", null);
-        configuration.topic = config.get("topic", "keycloak/events");
-        configuration.usePersistence = config.getBoolean("usePersistence", false);
-        configuration.retained = config.getBoolean("retained", true);
-        configuration.cleanSession = config.getBoolean("cleanSession", true);
-        configuration.qos = config.getInt("qos", 0);
+        MqttConnectOptions options = new MqttConnectOptions();
+        var serverUri = config.get("serverUri", "tcp://localhost:1883");
+        
+        MemoryPersistence persistence = null;
+        if (config.getBoolean("usePersistence", false)) {
+            persistence = new MemoryPersistence();
+        }
+        
+        var username = config.get("username", null);
+        var password = config.get("password", null);
+        if (username != null && password != null) {
+            options.setUserName(username);
+            options.setPassword(password.toCharArray());
+        }
+        options.setAutomaticReconnect(true);
+        options.setCleanSession(config.getBoolean("cleanSession", true));
+        options.setConnectionTimeout(10);
+
+        messageOptions = new MQTTMessageOptions();
+        messageOptions.topic = config.get("topic", "keycloak/events");
+        messageOptions.retained = config.getBoolean("retained", true);
+        messageOptions.qos = config.getInt("qos", 0);
+        
+        try {
+            client = new MqttClient(serverUri, PUBLISHER_ID, persistence);
+            client.connect(options);
+        } catch (MqttSecurityException e){
+            logger.log(Level.SEVERE, "Connection not secure!", e);
+        } catch (MqttException e){
+            logger.log(Level.SEVERE, "Connection could not be established!", e);
+        }        
     }
 
     @Override
@@ -75,7 +112,11 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
 
     @Override
     public void close() {
-        // not needed
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            logger.log(Level.SEVERE, "Connection could not be closed!", e);
+        }
     }
 
     @Override
