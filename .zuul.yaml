@@ -3,8 +3,12 @@
     check:
       jobs:
         - keycloak-extensions-maven-build
-        - keycloak-extensions-test-deploy
+        - keycloak-extensions-test-deploy-21.0
+        - keycloak-extensions-test-deploy-latest:
+            voting: false
     gate:
       jobs:
         - keycloak-extensions-maven-build
-        - keycloak-extensions-test-deploy
+        - keycloak-extensions-test-deploy-21.0
+        - keycloak-extensions-test-deploy-latest:
+            voting: false

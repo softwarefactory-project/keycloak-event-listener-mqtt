@@ -88,14 +88,14 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     private String convertEvent(Event event) {
         JSONObject ev = new JSONObject();
 
-        ev.put("type", event.getType().toString());
-        ev.put("realmId", event.getRealmId());
         ev.put("clientId", event.getClientId());
-        ev.put("userId", event.getUserId());
-        ev.put("ipAddress", event.getIpAddress());
-        ev.put("time", event.getTime());
-
         ev.put("error", event.getError());
+        ev.put("ipAddress", event.getIpAddress());
+        ev.put("realmId", event.getRealmId());
+        ev.put("sessionId", event.getSessionId());
+        ev.put("time", event.getTime());
+        ev.put("type", event.getType().toString());
+        ev.put("userId", event.getUserId());
 
         JSONObject evDetails = new JSONObject();
         if (event.getDetails() != null) {
@@ -111,16 +111,17 @@ public class MQTTEventListenerProvider implements EventListenerProvider {
     private String convertAdminEvent(AdminEvent adminEvent) {
         JSONObject ev = new JSONObject();
 
-        ev.put("type", adminEvent.getOperationType().toString());
-        ev.put("realmId", adminEvent.getAuthDetails().getRealmId());
+
         ev.put("clientId", adminEvent.getAuthDetails().getClientId());
-        ev.put("userId", adminEvent.getAuthDetails().getUserId());
+        ev.put("error", adminEvent.getError());
         ev.put("ipAddress", adminEvent.getAuthDetails().getIpAddress());
-        ev.put("time", adminEvent.getTime());
+        ev.put("realmId", adminEvent.getAuthDetails().getRealmId());
+        ev.put("representation", adminEvent.getRepresentation());
         ev.put("resourcePath", adminEvent.getResourcePath());
         ev.put("resourceType", adminEvent.getResourceTypeAsString());
-
-        ev.put("error", adminEvent.getError());
+        ev.put("time", adminEvent.getTime());
+        ev.put("type", adminEvent.getOperationType().toString());
+        ev.put("userId", adminEvent.getAuthDetails().getUserId());
 
         return ev.toString();
     }
