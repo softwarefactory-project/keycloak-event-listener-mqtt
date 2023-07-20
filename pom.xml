@@ -15,13 +15,14 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <groupId>org.softwarefactory.keycloak.providers.events.mqtt</groupId>
-    <version>19.0.2</version>
+    <version>22.0.0</version>
 
     <name>Keycloak: Event Publisher to MQTT</name>
-    <description/>
+    <description />
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>event-listener-mqtt</artifactId>
@@ -67,6 +68,7 @@
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
             <version>${version.keycloak}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
@@ -101,8 +103,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${version.compiler.maven.plugin}</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -117,27 +119,27 @@
                 </configuration>
             </plugin>
             <!-- Maven Assembly Plugin -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.4.1</version>
-				<configuration>
-					<!-- get all project dependencies -->
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-				</configuration>
-				<executions>
-				  <execution>
-					<id>make-assembly</id>
-                                        <!-- bind to the packaging phase -->
-					<phase>package</phase>
-					<goals>
-						<goal>single</goal>
-					</goals>
-				  </execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <!-- get all project dependencies -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <!-- bind to the packaging phase -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.2.1</version>

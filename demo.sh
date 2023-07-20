@@ -12,7 +12,7 @@ echo "Done."
 echo
 
 echo "Building keycloak with event listener ..."
-podman build -t test_kc_event_listener --build-arg KEYCLOAK_VERSION=${KEYCLOAK_VERSION:-21.0} -f testing/Dockerfile .
+podman build -t test_kc_event_listener --build-arg KEYCLOAK_VERSION=${KEYCLOAK_VERSION:-22.0} -f testing/Dockerfile .
 echo "Done."
 echo
 

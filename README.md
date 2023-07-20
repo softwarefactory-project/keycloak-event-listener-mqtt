@@ -2,14 +2,20 @@
 
 A Keycloak SPI that publishes events to a MQTT broker.
 
-This SPI has been deployed successfully on a containerized Keycloak 19.0.2
-and on a Keycloak 19.0 server on a kubernetes cluster. It should therefore
-work properly on any version of Keycloak above 19.0.2.
+This SPI has been deployed successfully on a containerized Keycloak 22.0.
+It should therefore work properly on any version of Keycloak above 22.0.
 
 # Build
 
 ```
 mvn clean install
+```
+
+To build the SPI for use with a version of Keycloak prior to 22.X, you need to use openjdk 11 and patch pom.xml to target java 11:
+
+```
+<source>11</source>
+<target>11</target>
 ```
 
 # Deploy

@@ -2,13 +2,21 @@
 - project:
     check:
       jobs:
-        - keycloak-extensions-maven-build
-        - keycloak-extensions-test-deploy-21.0
+        - keycloak-extensions-maven-build:
+            vars:
+              jdk_version: 17
+        - keycloak-extensions-test-deploy-22.0:
+            vars:
+              jdk_version: 17
         - keycloak-extensions-test-deploy-latest:
             voting: false
     gate:
       jobs:
-        - keycloak-extensions-maven-build
-        - keycloak-extensions-test-deploy-21.0
+        - keycloak-extensions-maven-build:
+            vars:
+              jdk_version: 17
+        - keycloak-extensions-test-deploy-22.0:
+            vars:
+              jdk_version: 17
         - keycloak-extensions-test-deploy-latest:
             voting: false
