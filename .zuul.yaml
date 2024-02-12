@@ -5,7 +5,7 @@
         - keycloak-extensions-maven-build:
             vars:
               jdk_version: 17
-        - keycloak-extensions-test-deploy-22.0:
+        - keycloak-extensions-test-deploy-23.0:
             vars:
               jdk_version: 17
         - keycloak-extensions-test-deploy-latest:
@@ -15,7 +15,7 @@
         - keycloak-extensions-maven-build:
             vars:
               jdk_version: 17
-        - keycloak-extensions-test-deploy-22.0:
+        - keycloak-extensions-test-deploy-23.0:
             vars:
               jdk_version: 17
         - keycloak-extensions-test-deploy-latest:

@@ -24,7 +24,7 @@ services:
       - KC_LOG_LEVEL=debug
     command:
       - "start-dev"
-      - "--spi-events-listener-mqtt-server-uri=\"tcp://mosquitto:1883\""
+      - "--spi-events-listener-mqtt-server-uri=tcp://mosquitto:1883"
       - "--spi-events-listener-mqtt-username=mqtt"
       - "--spi-events-listener-mqtt-password=mqtt"
       - "--spi-events-listener-mqtt-topic=keycloak"

@@ -62,7 +62,7 @@ By default, the SPI won't use persistence. If set to true, messages will be pers
 
 ```
 kc.sh start
-  --spi-events-listener-mqtt-server-uri "tcp://your.mqtt.server:port" \
+  --spi-events-listener-mqtt-server-uri tcp://your.mqtt.server:port \
   --spi-events-listener-mqtt-username mqtt_user \
   --spi-events-listener-mqtt-password mqtt_password \
   --spi-events-listener-mqtt-topic my_topic
