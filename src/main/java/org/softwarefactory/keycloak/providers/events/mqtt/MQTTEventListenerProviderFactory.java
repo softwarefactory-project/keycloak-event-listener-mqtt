@@ -42,7 +42,6 @@ import org.softwarefactory.keycloak.providers.events.models.MQTTMessageOptions;
  */
 public class MQTTEventListenerProviderFactory implements EventListenerProviderFactory {
     private static final Logger logger = Logger.getLogger(MQTTEventListenerProviderFactory.class.getName());
-    private static final String PUBLISHER_ID = "keycloak";
 
     private IMqttClient client;
     private Set<EventType> excludedEvents;
@@ -74,12 +73,13 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
 
         MqttConnectOptions options = new MqttConnectOptions();
         var serverUri = config.get("serverUri", "tcp://localhost:1883");
-        
+        var publisherId = config.get("publisherId", "keycloak-mqtt-publisher");
+
         MemoryPersistence persistence = null;
         if (config.getBoolean("usePersistence", false)) {
             persistence = new MemoryPersistence();
         }
-        
+
         var username = config.get("username", null);
         var password = config.get("password", null);
         if (username != null && password != null) {
@@ -94,15 +94,15 @@ public class MQTTEventListenerProviderFactory implements EventListenerProviderFa
         messageOptions.topic = config.get("topic", "keycloak/events");
         messageOptions.retained = config.getBoolean("retained", true);
         messageOptions.qos = config.getInt("qos", 0);
-        
+
         try {
-            client = new MqttClient(serverUri, PUBLISHER_ID, persistence);
+            client = new MqttClient(serverUri, publisherId, persistence);
             client.connect(options);
         } catch (MqttSecurityException e){
             logger.log(Level.SEVERE, "Connection not secure!", e);
         } catch (MqttException e){
             logger.log(Level.SEVERE, "Connection could not be established!", e);
-        }        
+        }
     }
 
     @Override
